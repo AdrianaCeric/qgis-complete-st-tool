@@ -32,12 +32,13 @@ A step-by-step tutorial for conducting multimodal accessibility analysis using Q
 
 ## Overview
 
-This methodology measures multimodal accessibility by calculating the total length of unique street network segments reachable within 15 minutes from origin points. The analysis supports multiple transportation modes and infrastructure scenarios, making it ideal for complete streets evaluation. Duplicate road segments are removed to ensure accurate accessibility measurements without double-counting infrastructure.
+This methodology measures multimodal accessibility by calculating the total length of unique street network segments reachable within 15 minutes from origin points. The analysis supports multiple transportation modes and infrastructure scenarios, making it ideal for complete streets evaluation. Duplicate road segments are removed to ensure accurate accessibility measurements without double-counting infrastructure. Cycling analysis incorporates Level of Traffic Stress (LTS) to account for comfort and safety impacts on cycling speeds.
 
 **Key Concepts:**
 - **Accessibility**: Network length reachable within time threshold
 - **Service Areas**: Geographic extent of network accessibility  
 - **Speed Assignment**: Mode and infrastructure-specific travel speeds
+- **Level of Traffic Stress (LTS)**: Cycling comfort assessment (1=very comfortable, 4=very stressful)
 - **Multimodal Analysis**: Separate analysis for walking, cycling, and transit
 
 ## Step 1: Data Collection
@@ -149,7 +150,68 @@ print(f"After cleaning: {cleaned_count}")
 print(f"Duplicates removed: {removed_count} ({removed_count/original_count*100:.1f}%)")
 ```
 
-### 2.3 Add Speed Fields
+### 2.3 Add Level of Traffic Stress (LTS) Analysis
+
+Level of Traffic Stress (LTS) quantifies cycling comfort based on infrastructure quality, traffic volume, and speed. This enhances cycling speed assignments by incorporating safety and comfort factors.
+
+**LTS Scale:**
+- **LTS 1**: Very comfortable (suitable for all ages)
+- **LTS 2**: Comfortable (suitable for most adults)  
+- **LTS 3**: Somewhat stressful (experienced cyclists only)
+- **LTS 4**: Very stressful (strong and fearless cyclists only)
+
+1. **Add LTS Field**:
+   - Right-click `network_clean` layer → **Properties → Fields**
+   - Click **pencil icon** (Toggle editing)
+   - Click **New field** button
+   - **Name**: `LTS`
+   - **Type**: Integer
+   - **Width**: 1
+   - Click **OK**
+
+2. **Calculate LTS Values**:
+   - Open **Field Calculator**
+   - **Update existing field**: `LTS`
+   - Use this Conveyal-based logic:
+
+```sql
+CASE 
+    -- Does not allow cars: LTS 1
+    WHEN "highway" IN ('cycleway', 'footway', 'path', 'pedestrian') THEN 1
+    
+    -- Service road: Unknown LTS (assign 3 for analysis)
+    WHEN "highway" = 'service' THEN 3
+    
+    -- Residential or living street: LTS 1  
+    WHEN "highway" IN ('residential', 'living_street') THEN 1
+    
+    -- Has 3 or fewer lanes and max speed ≤25 mph (≤40 km/h): LTS 2
+    WHEN ("lanes" IS NULL OR CAST("lanes" AS INTEGER) <= 3) AND 
+         ("maxspeed" IS NULL OR CAST("maxspeed" AS INTEGER) <= 40) AND 
+         "highway" IN ('unclassified', 'tertiary', 'tertiary_link') THEN 2
+         
+    -- Tertiary or smaller with bike lane: LTS 2
+    WHEN "highway" IN ('tertiary', 'tertiary_link', 'unclassified') AND 
+         ("cycleway" IS NOT NULL OR "cycleway:right" IS NOT NULL OR "cycleway:left" IS NOT NULL) THEN 2
+         
+    -- Larger roads with bike lane: LTS 3
+    WHEN "highway" IN ('primary', 'primary_link', 'secondary', 'secondary_link') AND 
+         ("cycleway" IS NOT NULL OR "cycleway:right" IS NOT NULL OR "cycleway:left" IS NOT NULL) THEN 3
+         
+    -- Primary/secondary without bike infrastructure: LTS 4
+    WHEN "highway" IN ('primary', 'primary_link', 'secondary', 'secondary_link', 'trunk', 'trunk_link') THEN 4
+    
+    -- Default for unknown cases
+    ELSE 3
+END
+```
+
+3. **Verify LTS Assignment**:
+   - Check attribute table for LTS values
+   - Most segments should have LTS 1-4
+   - No NULL values should remain
+
+### 2.4 Add Speed Fields
 
 1. **Enable Editing**:
    - Right-click `network_clean` layer → **Properties → Fields**
@@ -170,7 +232,7 @@ Walking Fields:
 - walk_s_brt
 - walk_enhanced
 
-Cycling Fields:
+Cycling Fields (LTS-Enhanced):
 - bike_base
 - bike_c_brt
 - bike_bi_brt  
@@ -183,6 +245,9 @@ Transit Fields:
 - bus_bi_brt
 - bus_s_brt
 - bus_enhanced
+
+LTS Analysis Field:
+- LTS
 ```
 
 3. **Save Changes**:
@@ -242,52 +307,56 @@ ELSE 3.0
 END
 ```
 
-### 3.2 Cycling Speed Assignment
+### 3.2 Cycling Speed Assignment with LTS Integration
 
-**bike_base (painted bike lanes):**
+Cycling speeds now incorporate Level of Traffic Stress (LTS) to reflect comfort and safety impacts on cycling performance.
+
+**Enhanced cycling speed methodology:**
+- **LTS 1 (Very Comfortable)**: 20-25 km/h - separated facilities, very low stress
+- **LTS 2 (Comfortable)**: 15-20 km/h - some protection, manageable stress  
+- **LTS 3 (Somewhat Stressful)**: 10-15 km/h - minimal protection, higher stress
+- **LTS 4 (Very Stressful)**: 8-12 km/h - no protection, high stress environment
+
+**bike_base (painted bike lanes - baseline scenario):**
 ```sql
 CASE 
-WHEN "highway" = 'cycleway' THEN 20
-WHEN "highway" = 'path' THEN 15
-WHEN "highway" IN ('primary','secondary','trunk') THEN 10
-WHEN "highway" = 'tertiary' THEN 12
-WHEN "highway" = 'unclassified' THEN 12
-WHEN "highway" = 'residential' THEN 15
-WHEN "highway" = 'track' THEN 10
-WHEN "highway" = 'footway' THEN 0.1
-ELSE 8
+    WHEN "LTS" = 1 THEN 20
+    WHEN "LTS" = 2 THEN 15
+    WHEN "LTS" = 3 THEN 12
+    WHEN "LTS" = 4 THEN 8
+    WHEN "highway" = 'footway' THEN 0.1
+    ELSE 10
 END
 ```
 
-**bike_c_brt, bike_bi_brt, bike_s_brt (separated bike lanes):**
+**bike_c_brt, bike_bi_brt, bike_s_brt (separated bike lanes scenarios):**
 ```sql
 CASE 
-WHEN "highway" = 'cycleway' THEN 25
-WHEN "highway" = 'path' THEN 22
-WHEN "highway" IN ('primary','secondary','trunk') THEN 22
-WHEN "highway" = 'tertiary' THEN 20
-WHEN "highway" = 'unclassified' THEN 20
-WHEN "highway" = 'residential' THEN 18
-WHEN "highway" = 'track' THEN 15
-WHEN "highway" = 'footway' THEN 0.1
-ELSE 18
+    WHEN "LTS" = 1 THEN 25
+    WHEN "LTS" = 2 THEN 22
+    WHEN "LTS" = 3 THEN 18
+    WHEN "LTS" = 4 THEN 15
+    WHEN "highway" = 'footway' THEN 0.1
+    ELSE 18
 END
 ```
 
-**bike_enhanced (separated bike lanes without BRT):**
+**bike_enhanced (enhanced active scenario):**
 ```sql
 CASE 
-WHEN "highway" = 'cycleway' THEN 25
-WHEN "highway" = 'path' THEN 22
-WHEN "highway" IN ('primary','secondary','trunk') THEN 20
-WHEN "highway" = 'tertiary' THEN 18
-WHEN "highway" = 'unclassified' THEN 18
-WHEN "highway" = 'residential' THEN 18
-WHEN "highway" = 'track' THEN 15
-WHEN "highway" = 'footway' THEN 0.1
-ELSE 15
+    WHEN "LTS" = 1 THEN 25
+    WHEN "LTS" = 2 THEN 20
+    WHEN "LTS" = 3 THEN 15
+    WHEN "LTS" = 4 THEN 12
+    WHEN "highway" = 'footway' THEN 0.1
+    ELSE 15
 END
 ```
+
+**LTS-Speed Rationale:**
+- **Complete streets with separated bike lanes** improve LTS 3&4 segments to higher comfort levels
+- **Baseline scenario** maintains existing LTS conditions with painted lanes only
+- **Speed assignments** reflect research showing 15-40% speed reductions on high-stress facilities
 
 ### 3.3 Transit Speed Assignment
 
@@ -489,7 +558,20 @@ END
        'Walk_Side_BRT', 'Walk_Enhanced'
    ])
 
-   # Cycling analysis  
+   # Check LTS distribution
+   lts_layer = QgsProject.instance().mapLayersByName('network_clean')[0]
+   lts_counts = {}
+   for feature in lts_layer.getFeatures():
+       lts_value = feature['LTS']
+       lts_counts[lts_value] = lts_counts.get(lts_value, 0) + 1
+   
+   print("\nLTS Distribution:")
+   for lts in sorted(lts_counts.keys()):
+       count = lts_counts[lts]
+       pct = count / lts_layer.featureCount() * 100
+       print(f"LTS {lts}: {count} segments ({pct:.1f}%)")
+
+   # Cycling analysis with LTS context  
    bike_results = analyze_accessibility("Cycling", [
        'Bike_Baseline', 'Bike_Center_BRT', 'Bike_Bidirectional_BRT',
        'Bike_Side_BRT', 'Bike_Enhanced'
