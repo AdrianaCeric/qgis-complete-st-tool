@@ -317,11 +317,17 @@ END
 
 ```sql
 CASE 
-WHEN "highway" IN ('cycleway', 'footway', 'path', 'pedestrian') THEN 1
-WHEN "highway" = 'service' THEN 3
+-- Exclude segments where bikes cannot go
+WHEN "highway" IN ('footway', 'steps', 'pedestrian') THEN NULL
+
+-- Bike-friendly infrastructure  
+WHEN "highway" IN ('cycleway', 'path') THEN 1
 WHEN "highway" IN ('residential', 'living_street') THEN 1
+
+-- Evaluate actual roads for cycling stress
 WHEN "highway" IN ('unclassified', 'tertiary', 'tertiary_link') THEN 2
 WHEN "highway" IN ('primary', 'primary_link', 'secondary', 'secondary_link', 'trunk', 'trunk_link') THEN 4
+WHEN "highway" = 'service' THEN 3
 ELSE 3
 END
 ```
