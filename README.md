@@ -1,6 +1,6 @@
-# 15-Minute Accessibility Analysis in QGIS: Complete Guide
+# 15-Minute Accessibility Analysis in QGIS to Determine Complete Street ALternative Accessibility
 
-A step-by-step tutorial for conducting multimodal accessibility analysis using QGIS network analysis tools.
+A step-by-step tutorial for conducting multimodal accessibility analysis on various complete streets alternatives using free QGIS network analysis tools, SQL, and a bit of Python.
 
 ## Table of Contents
 - [Prerequisites](#prerequisites)
@@ -32,7 +32,7 @@ A step-by-step tutorial for conducting multimodal accessibility analysis using Q
 
 ## Overview
 
-This methodology measures multimodal accessibility by calculating the total length of unique street network segments reachable within 15 minutes from origin points. The analysis supports multiple transportation modes and infrastructure scenarios, making it ideal for complete streets evaluation. Duplicate road segments are removed to ensure accurate accessibility measurements without double-counting infrastructure. Cycling analysis incorporates Level of Traffic Stress (LTS) to account for comfort and safety impacts on cycling speeds.
+This methodology measures multimodal accessibility by calculating the total length of street network segments reachable within 15 minutes from origin points. The analysis supports multiple transportation modes and infrastructure scenarios, making it ideal for complete streets evaluation. The network uses projected coordinates to ensure accurate distance measurements. Cycling analysis incorporates Level of Traffic Stress (LTS) to account for comfort and safety impacts on cycling speeds.
 
 **Key Concepts:**
 - **Accessibility**: Network length reachable within time threshold
@@ -161,7 +161,7 @@ Level of Traffic Stress (LTS) quantifies cycling comfort based on infrastructure
 - **LTS 4**: Very stressful (strong and fearless cyclists only)
 
 1. **Add LTS Field**:
-   - Right-click `network_clean` layer → **Properties → Fields**
+   - Right-click `network_projected` layer → **Properties → Fields**
    - Click **pencil icon** (Toggle editing)
    - Click **New field** button
    - **Name**: `LTS`
@@ -214,7 +214,7 @@ END
 ### 2.4 Add Speed Fields
 
 1. **Enable Editing**:
-   - Right-click `network_clean` layer → **Properties → Fields**
+   - Right-click `network_projected` layer → **Properties → Fields**
    - Click **pencil icon** (Toggle editing)
 
 2. **Add Speed Fields** (add these one by one):
@@ -259,7 +259,7 @@ LTS Analysis Field:
 ### 3.1 Walking Speed Assignment
 
 **Open Field Calculator**:
-- Right-click `network_clean` layer → **Open Attribute Table**
+- Right-click `network_projected` layer → **Open Attribute Table**
 - Ensure editing mode is on (pencil icon)
 - Click **Field Calculator** (calculator icon)
 
@@ -470,7 +470,7 @@ END
 
 2. **Configure Parameters**:
    - **Input layer**: `residential_origins`
-   - **Vector layer representing network**: `network_clean`
+   - **Vector layer representing network**: `network_projected`
    - **Path type**: **Fastest**
    - **Travel cost**: `0.25` (15 minutes = 0.25 hours)
 
@@ -559,7 +559,7 @@ END
    ])
 
    # Check LTS distribution
-   lts_layer = QgsProject.instance().mapLayersByName('network_clean')[0]
+   lts_layer = QgsProject.instance().mapLayersByName('network_projected')[0]
    lts_counts = {}
    for feature in lts_layer.getFeatures():
        lts_value = feature['LTS']
