@@ -148,6 +148,36 @@ WHEN "highway" IN ('primary', 'primary_link', 'secondary', 'secondary_link', 'tr
 ELSE 3
 END
 ```
+### LTS Formula Explanation
+#### Part 1: Exclude Non-Cycling Segments
+- footway: Sidewalks (bikes prohibited)
+- steps: Stairs (physically impossible for bikes)
+- pedestrian: Pedestrian-only zones (bikes usually prohibited)
+   - Why NULL: These segments get excluded from cycling analysis entirely
+#### Part 2: Bike-Friendly Infrastructure = LTS 1
+Assign LTS 1 (very comfortable) to low-stress cycling infrastructure
+- cycleway: Dedicated bike paths (separated from cars)
+- path: Multi-use trails (typically comfortable for cycling)
+- residential: Quiet neighborhood streets (low traffic, low speeds)
+- living_street: Very low-speed shared streets
+   - Why LTS 1: These are suitable for all ages and cycling abilities
+#### Part 3: Moderate Roads = LTS 2
+Assign LTS 2 (comfortable for most adults) to smaller roads
+- unclassified: Local roads with unknown classification
+- tertiary: Smaller connecting roads between neighborhoods
+- tertiary_link: Ramps/connections to tertiary roads
+   - Why LTS 2: Some traffic but generally manageable for regular cyclists
+#### Part 4: High-Stress Roads = LTS 4
+Assign LTS 4 (very stressful) to major arterials
+- primary: Major roads (like highways through cities)
+- secondary: Important connecting roads between areas
+- trunk: Major highways/expressways
+- _link: On/off ramps and connections to these roads
+   - Why LTS 4: High speed, high volume traffic - only confident cyclists use these
+#### Part 5: Default Cases
+- service: Access roads to businesses/parking (moderate stress)
+- `ELSE 3`: Any other road type gets LTS 3 as default
+   - Why LTS 3: Moderate default for unknown or unusual road types
 
 3. **Verify LTS Assignment**:
    - Check attribute table for LTS values
