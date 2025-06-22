@@ -140,40 +140,21 @@ Level of Traffic Stress (LTS) quantifies cycling comfort based on infrastructure
 
 ```sql
 CASE 
-    -- Does not allow cars: LTS 1
-    WHEN "highway" IN ('cycleway', 'footway', 'path', 'pedestrian') THEN 1
-    
-    -- Service road: Unknown LTS (assign 3 for analysis)
-    WHEN "highway" = 'service' THEN 3
-    
-    -- Residential or living street: LTS 1  
-    WHEN "highway" IN ('residential', 'living_street') THEN 1
-    
-    -- Has 3 or fewer lanes and max speed ≤25 mph (≤40 km/h): LTS 2
-    WHEN ("lanes" IS NULL OR CAST("lanes" AS INTEGER) <= 3) AND 
-         ("maxspeed" IS NULL OR CAST("maxspeed" AS INTEGER) <= 40) AND 
-         "highway" IN ('unclassified', 'tertiary', 'tertiary_link') THEN 2
-         
-    -- Tertiary or smaller with bike lane: LTS 2
-    WHEN "highway" IN ('tertiary', 'tertiary_link', 'unclassified') AND 
-         ("cycleway" IS NOT NULL OR "cycleway:right" IS NOT NULL OR "cycleway:left" IS NOT NULL) THEN 2
-         
-    -- Larger roads with bike lane: LTS 3
-    WHEN "highway" IN ('primary', 'primary_link', 'secondary', 'secondary_link') AND 
-         ("cycleway" IS NOT NULL OR "cycleway:right" IS NOT NULL OR "cycleway:left" IS NOT NULL) THEN 3
-         
-    -- Primary/secondary without bike infrastructure: LTS 4
-    WHEN "highway" IN ('primary', 'primary_link', 'secondary', 'secondary_link', 'trunk', 'trunk_link') THEN 4
-    
-    -- Default for unknown cases
-    ELSE 3
+WHEN "highway" IN ('cycleway', 'footway', 'path', 'pedestrian') THEN 1
+WHEN "highway" = 'service' THEN 3
+WHEN "highway" IN ('residential', 'living_street') THEN 1
+WHEN "highway" IN ('unclassified', 'tertiary', 'tertiary_link') THEN 2
+WHEN "highway" IN ('primary', 'primary_link', 'secondary', 'secondary_link', 'trunk', 'trunk_link') THEN 4
+ELSE 3
 END
 ```
 
 3. **Verify LTS Assignment**:
    - Check attribute table for LTS values
-   - Most segments should have LTS 1-4
-   - No NULL values should remain
+      - Right-click the `network_projected layer` → "Open Attribute Table"
+      - Scroll right in the table to find the LTS column
+      - Most segments should have LTS 1-4
+      - No NULL values should remain
 
 ### 2.3 Add Speed Fields
 
