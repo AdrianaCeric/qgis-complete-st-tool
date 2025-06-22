@@ -113,44 +113,8 @@ This methodology measures multimodal accessibility by calculating the total leng
    - **File name**: `network_projected.gpkg`
    - Use the projected version for all analysis
 
-### 2.2 Remove Duplicate Road Segments
 
-OSM data often contains duplicate road segments that can inflate accessibility calculations. Remove these before analysis.
-
-1. **Open Processing Toolbox**:
-   - **Processing → Toolbox**
-
-2. **Search for Duplicate Tool**:
-   - Search "Delete duplicate geometries"
-   - Double-click the tool
-
-3. **Configure Duplicate Removal**:
-   - **Input layer**: `network`
-   - **Output**: Save as `network_clean.gpkg`
-   - Click **Run**
-
-4. **Verify Results**:
-   - Check feature count: original vs cleaned
-   - Visually inspect areas with known duplicates
-   - **Use `network_clean` for all subsequent analysis**
-
-**Quality Check (Optional)**:
-Open Python Console and run:
-```python
-# Check duplicate removal effectiveness
-original = QgsProject.instance().mapLayersByName('network')[0]
-cleaned = QgsProject.instance().mapLayersByName('network_clean')[0]
-
-original_count = original.featureCount()
-cleaned_count = cleaned.featureCount()
-removed_count = original_count - cleaned_count
-
-print(f"Original segments: {original_count}")
-print(f"After cleaning: {cleaned_count}") 
-print(f"Duplicates removed: {removed_count} ({removed_count/original_count*100:.1f}%)")
-```
-
-### 2.3 Add Level of Traffic Stress (LTS) Analysis
+### 2.2 Add Level of Traffic Stress (LTS) Analysis
 
 Level of Traffic Stress (LTS) quantifies cycling comfort based on infrastructure quality, traffic volume, and speed. This enhances cycling speed assignments by incorporating safety and comfort factors.
 
@@ -211,7 +175,7 @@ END
    - Most segments should have LTS 1-4
    - No NULL values should remain
 
-### 2.4 Add Speed Fields
+### 2.3 Add Speed Fields
 
 1. **Enable Editing**:
    - Right-click `network_projected` layer → **Properties → Fields**
