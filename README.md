@@ -203,6 +203,16 @@ LTS Analysis Field:
 
 ### 3.1 Walking Speed Assignment
 
+These SQL formulas are used in QGIS Field Calculator to assign travel speeds for different transportation modes across five complete streets alternatives. All speeds are in km/h.
+You may alter speed assignments based on your specific complete streets alternative designs. As an example, these alternatives will be evaluated:
+
+**Alternatives:**
+1. **Baseline**: Painted bike lanes + standard sidewalks + regular bus
+2. **Center BRT**: Center-running BRT + separated bike lanes + wider walkways
+3. **Bidirectional BRT**: Bidirectional BRT + separated bike lanes + wider walkways  
+4. **Side BRT**: Side-running BRT + separated bike lanes + wider walkways
+5. **Enhanced Active**: Regular bus + separated bike lanes + wider walkways
+
 **Open Field Calculator**:
 - Right-click `network_projected` layer → **Open Attribute Table**
 - Ensure editing mode is on (pencil icon)
@@ -210,7 +220,9 @@ LTS Analysis Field:
 
 **For each walking field, use these formulas:**
 
-**walk_base (baseline with standard sidewalks):**
+## Walking Speed Fields
+
+### walk_base (baseline with standard sidewalks)
 ```sql
 CASE 
 WHEN "highway" = 'footway' THEN 3.5
@@ -224,12 +236,26 @@ ELSE 2.5
 END
 ```
 
-**walk_c_brt, walk_bi_brt, walk_s_brt (wider walkways):**
+### walk_c_brt (Center BRT + wider walkways)
 ```sql
 CASE 
 WHEN "highway" = 'footway' THEN 4.5
 WHEN "highway" = 'pedestrian' THEN 4.5
-WHEN "highway" IN ('primary','secondary','trunk') THEN 4.0
+WHEN "highway" IN ('primary','secondary','trunk') THEN 4.2
+WHEN "highway" = 'tertiary' THEN 3.8
+WHEN "highway" = 'unclassified' THEN 3.8
+WHEN "highway" = 'residential' THEN 3.5
+WHEN "highway" = 'path' THEN 4.2
+ELSE 3.8
+END
+```
+
+### walk_bi_brt (Bidirectional BRT + wider walkways)
+```sql
+CASE 
+WHEN "highway" = 'footway' THEN 4.5
+WHEN "highway" = 'pedestrian' THEN 4.5
+WHEN "highway" IN ('primary','secondary','trunk') THEN 3.8
 WHEN "highway" = 'tertiary' THEN 3.5
 WHEN "highway" = 'unclassified' THEN 3.5
 WHEN "highway" = 'residential' THEN 3.5
@@ -238,7 +264,21 @@ ELSE 3.5
 END
 ```
 
-**walk_enhanced (enhanced sidewalks):**
+### walk_s_brt (Side BRT + wider walkways)
+```sql
+CASE 
+WHEN "highway" = 'footway' THEN 4.5
+WHEN "highway" = 'pedestrian' THEN 4.5
+WHEN "highway" IN ('primary','secondary','trunk') THEN 3.5
+WHEN "highway" = 'tertiary' THEN 3.5
+WHEN "highway" = 'unclassified' THEN 3.5
+WHEN "highway" = 'residential' THEN 3.5
+WHEN "highway" = 'path' THEN 4.0
+ELSE 3.2
+END
+```
+
+### walk_enhanced (enhanced active)
 ```sql
 CASE 
 WHEN "highway" = 'footway' THEN 4.0
@@ -252,60 +292,83 @@ ELSE 3.0
 END
 ```
 
-### 3.2 Cycling Speed Assignment with LTS Integration
+---
 
-Cycling speeds now incorporate Level of Traffic Stress (LTS) to reflect comfort and safety impacts on cycling performance.
+## Cycling Speed Fields (LTS-Enhanced)
 
-**Enhanced cycling speed methodology:**
+**Note**: These formulas require the LTS field to be calculated first.
+
+**Speed Methodology:**
 - **LTS 1 (Very Comfortable)**: 20-25 km/h - separated facilities, very low stress
-- **LTS 2 (Comfortable)**: 15-20 km/h - some protection, manageable stress  
-- **LTS 3 (Somewhat Stressful)**: 10-15 km/h - minimal protection, higher stress
-- **LTS 4 (Very Stressful)**: 8-12 km/h - no protection, high stress environment
+- **LTS 2 (Comfortable)**: 15-23 km/h - some protection, manageable stress  
+- **LTS 3 (Somewhat Stressful)**: 12-21 km/h - minimal protection, higher stress
+- **LTS 4 (Very Stressful)**: 8-18 km/h - no protection, high stress environment
 
-**bike_base (painted bike lanes - baseline scenario):**
+### bike_base (painted bike lanes - baseline scenario)
 ```sql
 CASE 
-    WHEN "LTS" = 1 THEN 20
-    WHEN "LTS" = 2 THEN 15
-    WHEN "LTS" = 3 THEN 12
-    WHEN "LTS" = 4 THEN 8
-    WHEN "highway" = 'footway' THEN 0.1
-    ELSE 10
+WHEN "LTS" = 1 THEN 20
+WHEN "LTS" = 2 THEN 15
+WHEN "LTS" = 3 THEN 12
+WHEN "LTS" = 4 THEN 8
+WHEN "highway" = 'footway' THEN 0.1
+ELSE 10
 END
 ```
 
-**bike_c_brt, bike_bi_brt, bike_s_brt (separated bike lanes scenarios):**
+### bike_c_brt (Center BRT + separated bike lanes)
 ```sql
 CASE 
-    WHEN "LTS" = 1 THEN 25
-    WHEN "LTS" = 2 THEN 22
-    WHEN "LTS" = 3 THEN 18
-    WHEN "LTS" = 4 THEN 15
-    WHEN "highway" = 'footway' THEN 0.1
-    ELSE 18
+WHEN "LTS" = 1 THEN 25
+WHEN "LTS" = 2 THEN 23
+WHEN "LTS" = 3 THEN 21
+WHEN "LTS" = 4 THEN 18
+WHEN "highway" = 'footway' THEN 0.1
+ELSE 20
 END
 ```
 
-**bike_enhanced (enhanced active scenario):**
+### bike_bi_brt (Bidirectional BRT + separated bike lanes)
 ```sql
 CASE 
-    WHEN "LTS" = 1 THEN 25
-    WHEN "LTS" = 2 THEN 20
-    WHEN "LTS" = 3 THEN 15
-    WHEN "LTS" = 4 THEN 12
-    WHEN "highway" = 'footway' THEN 0.1
-    ELSE 15
+WHEN "LTS" = 1 THEN 25
+WHEN "LTS" = 2 THEN 20
+WHEN "LTS" = 3 THEN 19
+WHEN "LTS" = 4 THEN 16
+WHEN "highway" = 'footway' THEN 0.1
+ELSE 18
 END
 ```
 
-**LTS-Speed Rationale:**
-- **Complete streets with separated bike lanes** improve LTS 3&4 segments to higher comfort levels
-- **Baseline scenario** maintains existing LTS conditions with painted lanes only
-- **Speed assignments** reflect research showing 15-40% speed reductions on high-stress facilities
+### bike_s_brt (Side BRT + separated bike lanes)
+```sql
+CASE 
+WHEN "LTS" = 1 THEN 25
+WHEN "LTS" = 2 THEN 18
+WHEN "LTS" = 3 THEN 16
+WHEN "LTS" = 4 THEN 14
+WHEN "highway" = 'footway' THEN 0.1
+ELSE 16
+END
+```
 
-### 3.3 Transit Speed Assignment
+### bike_enhanced (enhanced active with separated lanes)
+```sql
+CASE 
+WHEN "LTS" = 1 THEN 25
+WHEN "LTS" = 2 THEN 20
+WHEN "LTS" = 3 THEN 15
+WHEN "LTS" = 4 THEN 12
+WHEN "highway" = 'footway' THEN 0.1
+ELSE 15
+END
+```
 
-**bus_base (regular buses):**
+---
+
+## Transit Speed Fields
+
+### bus_base (regular buses)
 ```sql
 CASE 
 WHEN "highway" IN ('primary','secondary','trunk') THEN 25
@@ -316,7 +379,7 @@ ELSE 15
 END
 ```
 
-**bus_c_brt (center BRT):**
+### bus_c_brt (Center BRT - highest speeds)
 ```sql
 CASE 
 WHEN "highway" IN ('primary','secondary','trunk') THEN 45
@@ -327,29 +390,29 @@ ELSE 20
 END
 ```
 
-**bus_bi_brt (bidirectional BRT):**
+### bus_bi_brt (Bidirectional BRT - moderate complexity)
 ```sql
 CASE 
-WHEN "highway" IN ('primary','secondary','trunk') THEN 40
+WHEN "highway" IN ('primary','secondary','trunk') THEN 38
 WHEN "highway" = 'tertiary' THEN 30
-WHEN "highway" = 'unclassified' THEN 28
-WHEN "highway" = 'residential' THEN 25
+WHEN "highway" = 'unclassified' THEN 26
+WHEN "highway" = 'residential' THEN 22
 ELSE 18
 END
 ```
 
-**bus_s_brt (side BRT):**
+### bus_s_brt (Side BRT - intersection constraints)
 ```sql
 CASE 
-WHEN "highway" IN ('primary','secondary','trunk') THEN 35
-WHEN "highway" = 'tertiary' THEN 28
-WHEN "highway" = 'unclassified' THEN 25
-WHEN "highway" = 'residential' THEN 22
-ELSE 15
+WHEN "highway" IN ('primary','secondary','trunk') THEN 32
+WHEN "highway" = 'tertiary' THEN 26
+WHEN "highway" = 'unclassified' THEN 23
+WHEN "highway" = 'residential' THEN 20
+ELSE 16
 END
 ```
 
-**bus_enhanced (enhanced bus service):**
+### bus_enhanced (enhanced regular service)
 ```sql
 CASE 
 WHEN "highway" IN ('primary','secondary','trunk') THEN 28
@@ -359,6 +422,75 @@ WHEN "highway" = 'residential' THEN 18
 ELSE 15
 END
 ```
+
+---
+
+## Level of Traffic Stress (LTS) Formula
+
+**Apply this first before cycling speed assignments:**
+
+```sql
+CASE 
+WHEN "highway" IN ('cycleway', 'footway', 'path', 'pedestrian') THEN 1
+WHEN "highway" = 'service' THEN 3
+WHEN "highway" IN ('residential', 'living_street') THEN 1
+WHEN "highway" IN ('unclassified', 'tertiary', 'tertiary_link') THEN 2
+WHEN "highway" IN ('primary', 'primary_link', 'secondary', 'secondary_link', 'trunk', 'trunk_link') THEN 4
+ELSE 3
+END
+```
+
+---
+
+## Application Order
+
+**Apply speed fields in this sequence:**
+
+1. **LTS field** (integer)
+2. **Walking fields** (5 fields): walk_base, walk_c_brt, walk_bi_brt, walk_s_brt, walk_enhanced
+3. **Cycling fields** (5 fields): bike_base, bike_c_brt, bike_bi_brt, bike_s_brt, bike_enhanced  
+4. **Transit fields** (5 fields): bus_base, bus_c_brt, bus_bi_brt, bus_s_brt, bus_enhanced
+
+**Total fields created**: 16 (1 LTS + 15 speed fields)
+
+---
+
+## Speed Assignment Rationale
+
+### Walking Speed Differentiation
+- **Center BRT**: Optimal pedestrian environment with maximum separation from traffic
+- **Bidirectional BRT**: Good separation but more complex crossings at stations
+- **Side BRT**: Protected walkways but more intersection conflicts  
+- **Enhanced Active**: Walkway improvements without BRT investment
+- **Baseline**: Standard sidewalks with arterial proximity impacts
+
+### Cycling Speed Differentiation  
+- **LTS Integration**: Complete streets infrastructure improves cycling stress levels
+- **Center BRT**: Optimal cycling environment enabling highest speeds across all LTS levels
+- **Bidirectional/Side BRT**: Good protection with varying operational complexity
+- **Enhanced Active**: Infrastructure benefits without BRT
+- **Baseline**: Maintains existing high-stress conditions with painted lanes
+
+### Transit Speed Differentiation
+- **Center BRT**: Complete grade separation and optimal signal priority (20-45 km/h)
+- **Bidirectional BRT**: Efficient operations with moderate complexity (18-38 km/h)
+- **Side BRT**: Dedicated lanes but frequent intersection delays (16-32 km/h)
+- **Enhanced Regular**: Improved operations in mixed traffic (15-28 km/h)
+- **Baseline**: Standard mixed traffic operations (15-25 km/h)
+
+---
+
+## TCQSM Alignment
+
+**Walking Speeds**: Range from 2.0-4.5 km/h, approaching TCQSM standard of 5.0 km/h with infrastructure improvements
+
+**Cycling Speeds**: Protected alternatives achieve portions of TCQSM 20-25 km/h range through LTS improvements  
+
+**Transit Speeds**: BRT alternatives reflect TCQSM guidance that "BRT should emulate rapid transit quality"
+
+---
+
+*Note: These speed assignments are based on Transit Capacity and Quality of Service Manual (TCQSM) standards, Level of Traffic Stress research, and BRT design guidelines. All speeds reflect the relationship between infrastructure quality and travel performance for multimodal accessibility analysis.*
 
 **Save All Changes**:
 - After completing all speed assignments, save edits (disk icon)
