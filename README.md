@@ -1,4 +1,4 @@
-# 15-Minute Accessibility Analysis in QGIS to Determine Complete Street ALternative Accessibility
+# QGIS to Determine 15-Minute Accessibility of Complete Street Alternatives
 
 A step-by-step tutorial for conducting multimodal accessibility analysis on various complete streets alternatives using free QGIS network analysis tools, SQL, and a bit of Python.
 
@@ -200,8 +200,6 @@ LTS Analysis Field:
    - Save edits (disk icon)
 
 ## Step 3: Speed Assignment
-
-### 3.1 Walking Speed Assignment
 
 These SQL formulas are used in QGIS Field Calculator to assign travel speeds for different transportation modes across five complete streets alternatives. All speeds are in km/h.
 You may alter speed assignments based on your specific complete streets alternative designs. As an example, these alternatives will be evaluated:
