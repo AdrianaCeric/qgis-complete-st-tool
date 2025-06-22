@@ -216,7 +216,16 @@ You may alter speed assignments based on your specific complete streets alternat
 - Ensure editing mode is on (pencil icon)
 - Click **Field Calculator** (calculator icon)
 
-**For each walking field, use these formulas:**
+**Apply speed fields in this sequence:**
+
+1. **LTS field** (integer)
+2. **Walking fields** (5 fields): walk_base, walk_c_brt, walk_bi_brt, walk_s_brt, walk_enhanced
+3. **Cycling fields** (5 fields): bike_base, bike_c_brt, bike_bi_brt, bike_s_brt, bike_enhanced  
+4. **Transit fields** (5 fields): bus_base, bus_c_brt, bus_bi_brt, bus_s_brt, bus_enhanced
+
+**Total fields created**: 16 (1 LTS + 15 speed fields)
+
+---
 
 ## Walking Speed Fields
 
@@ -301,6 +310,23 @@ END
 - **LTS 2 (Comfortable)**: 15-23 km/h - some protection, manageable stress  
 - **LTS 3 (Somewhat Stressful)**: 12-21 km/h - minimal protection, higher stress
 - **LTS 4 (Very Stressful)**: 8-18 km/h - no protection, high stress environment
+
+## Level of Traffic Stress (LTS) Formula
+
+**Apply this first before cycling speed assignments:**
+
+```sql
+CASE 
+WHEN "highway" IN ('cycleway', 'footway', 'path', 'pedestrian') THEN 1
+WHEN "highway" = 'service' THEN 3
+WHEN "highway" IN ('residential', 'living_street') THEN 1
+WHEN "highway" IN ('unclassified', 'tertiary', 'tertiary_link') THEN 2
+WHEN "highway" IN ('primary', 'primary_link', 'secondary', 'secondary_link', 'trunk', 'trunk_link') THEN 4
+ELSE 3
+END
+```
+
+---
 
 ### bike_base (painted bike lanes - baseline scenario)
 ```sql
@@ -420,36 +446,6 @@ WHEN "highway" = 'residential' THEN 18
 ELSE 15
 END
 ```
-
----
-
-## Level of Traffic Stress (LTS) Formula
-
-**Apply this first before cycling speed assignments:**
-
-```sql
-CASE 
-WHEN "highway" IN ('cycleway', 'footway', 'path', 'pedestrian') THEN 1
-WHEN "highway" = 'service' THEN 3
-WHEN "highway" IN ('residential', 'living_street') THEN 1
-WHEN "highway" IN ('unclassified', 'tertiary', 'tertiary_link') THEN 2
-WHEN "highway" IN ('primary', 'primary_link', 'secondary', 'secondary_link', 'trunk', 'trunk_link') THEN 4
-ELSE 3
-END
-```
-
----
-
-## Application Order
-
-**Apply speed fields in this sequence:**
-
-1. **LTS field** (integer)
-2. **Walking fields** (5 fields): walk_base, walk_c_brt, walk_bi_brt, walk_s_brt, walk_enhanced
-3. **Cycling fields** (5 fields): bike_base, bike_c_brt, bike_bi_brt, bike_s_brt, bike_enhanced  
-4. **Transit fields** (5 fields): bus_base, bus_c_brt, bus_bi_brt, bus_s_brt, bus_enhanced
-
-**Total fields created**: 16 (1 LTS + 15 speed fields)
 
 ---
 
